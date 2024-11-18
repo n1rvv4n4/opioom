@@ -1,0 +1,2 @@
+2024-11-16 12:34:15 [ERROR]: Ошибка синхронизации базы данных:
+2024-11-16 15:26:27 [ERROR]: Ошибка синхронизации базы данных: Access denied for user 'db_user'@'localhost' (using password: YES)
