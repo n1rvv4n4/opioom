@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Опиум</title>
+    <style>
+        @font-face {
+            font-family: 'MainFont';
+            src: url('fonts/MainFont.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'SecondaryFont';
+            src: url('fonts/SecondaryFont.ttf') format('truetype');
+        }
+
+        body {
+            font-family: 'MainFont', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: url('background.gif') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        #quiz-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 600px;
+            box-sizing: border-box;
+            position: relative;
+            animation: fadeIn 0.5s ease, slideIn 0.5s ease;
+        }
+
+
+        #question {
+            font-size: 1.5vw;
+            margin-bottom: 20px;
+            font-family: 'SecondaryFont', sans-serif;
+        }
+
+        #answer-input {
+            width: calc(100% - 20px); /* Уменьшение ширины для учета отступов */
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            display: none;
+            box-sizing: border-box; /* Учёт отступов внутри ширины */
+        }
+
+
+        .choice-button {
+            font-family: 'MainFont', sans-serif;
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .choice-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .final-button {
+            display: block;
+            width: calc(100% - 20px); /* Учитываем отступы */
+            padding: 10px;
+            margin: 20px auto 0; /* Центрируем по горизонтали и добавляем отступ сверху */
+            background-color: #b10e0d;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s; /* Уменьшаем масштабирование */
+            box-sizing: border-box; /* Учитываем padding в ширине */
+        }
+
+        .final-button:hover {
+            background-color: #e4291c;
+            transform: scale(1.02); /* Минимальное масштабирование */
+        }
+
+
+        #next-button {
+            font-family: 'MainFont', sans-serif;
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            display: none;
+        }
+
+        #next-button:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .fade-out {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        .choice-button.selected {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            #quiz-container {
+                width: 90%;
+                padding: 5%;
+                border-radius: 15px; /* Больше радиус для более мягкого вида */
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Более глубокая тень */
+            }
+
+            #question {
+                font-size: 5vw;
+                line-height: 1.2; /* Улучшение читаемости */
+            }
+
+            #answer-input,
+            .choice-button,
+            #next-button {
+                font-size: 4vw;
+                padding: 10px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            #quiz-container {
+                padding: 30px;
+            }
+
+            #question {
+                font-size: 1.5em;
+            }
+
+            #answer-input,
+            .choice-button,
+            #next-button {
+                font-size: 1.2em;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="quiz-container">
+    <div id="question"></div>
+    <input type="text" id="answer-input">
+    <div id="choice-container"></div>
+    <button id="next-button">Далее</button>
+</div>
+<script>
+    const questions = [
+        {
+            type: 'text',
+            question: 'Привет! Как тебя зовут?',
+            validate: function(input) {
+                const regex = /^[A-Za-zА-Яа-яЁё]{1}[A-Za-zА-Яа-яЁё ]{0,49}$/;
+                return regex.test(input) && input.length >= 2;
+            }
+        },
+        {
+            type: 'choice',
+            question: '<session_user_name>, Какое настроение у тебя сейчас? (выбери одно)',
+            choices: ['Радость', 'Грусть', 'Усталость', 'Спокойствие', 'Волнение']
+        },
+        {
+            type: 'choice',
+            question: 'Бывает, что музыка становится твоим спасением в трудные моменты?',
+            choices: ['Да', 'Иногда', 'Нет']
+        },
+        {
+            type: 'choice',
+            question: 'Какой жанр музыки чаще всего помогает тебе поднять настроение?',
+            choices: ['Поп', 'Хип-Хоп', 'Рок', 'Электронная', 'Другое']
+        },
+        {
+            type: 'choice',
+            question: 'Где чаще всего слушаешь музыку и почему именно там?',
+            choices: ['Яндекс', 'ВК', 'Spotify', 'Apple', 'YouTube', 'Иное']
+        }
+    ];
+
+    const links = {
+        'Яндекс': { text: "Слушай на Яндекс Музыке!", url: "https://music.yandex.ru/artist/8345522" },
+        'ВК': { text: "Слушай в VK!", url: "https://vk.com/artist/opioom" },
+        'Spotify': { text: "Слушай на Spotify!", url: "https://open.spotify.com/artist/41IXKzjdL0TLdjGoyWuXQH" },
+        'Apple': { text: "Слушай в Apple Music!", url: "https://music.apple.com/th/artist/opioom/1485953341" },
+        'YouTube': { text: "Слушай на YouTube!", url: "https://www.youtube.com/watch?v=s3QmCwePJX8" },
+        'default': { text: "Приятного прослушивания!", url: "https://band.link/propala" }
+    };
+
+    let currentQuestionIndex = 0;
+    let answers = [];
+    let session_user_name = '';
+    let sessionId = '';
+
+    let serverIP = '';
+    let ServerPort = '';
+    let protocol = 'https://';
+
+    async function loadConfig() {
+        try {
+            const response = await fetch('config.json');
+            const config = await response.json();
+            serverIP = config.serverIP;
+            ServerPort = config.ServerPort;
+            console.log('SERVER_IP: ',serverIP)
+            console.log('SERVER_PORT: ',ServerPort)
+            initSession();
+        } catch (error) {
+            console.error('Ошибка загрузки конфигурации:', error);
+        }
+    }
+    async function initSession() {
+        try {
+            console.log(`/api/sessions/startSession`)
+            const response = await fetch(`/api/sessions/startSession`);
+            const data = await response.json();
+            sessionId = data.sessionId;
+            console.log(`Новая сессия: ${sessionId}`);
+            
+        } catch (error) {
+            console.error('Ошибка инициализации сессии:', error);
+        }
+    }
+
+    async function updateSession(data) {
+        try {
+            await fetch(`/api/sessions/updateSession/${sessionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            console.log(`Сессия обновлена (${JSON.stringify(data)})`);
+        } catch (error) {
+            console.error('Ошибка обновления сессии:', error);
+        }
+    }
+
+    document.getElementById('next-button').addEventListener('click', async () => {
+        const input = document.getElementById('answer-input');
+        if (questions[currentQuestionIndex].type === 'text' && questions[currentQuestionIndex].validate(input.value.trim())) {
+            session_user_name = input.value.trim();
+            answers.push(session_user_name);
+            await updateSession({ name: session_user_name });
+            showNextQuestion();
+        } else if (input.style.display === 'block') {
+            if (questions[currentQuestionIndex].validate && !questions[currentQuestionIndex].validate(input.value.trim())) {
+                alert("Пожалуйста, введите корректное имя.");
+                return;
+            }
+        } else {
+            answers.push(input.value.trim());
+            showNextQuestion();
+        }
+    });
+
+    function handleAnswerSelection(answer) {
+        answers.push(answer);
+        if (currentQuestionIndex === questions.length - 1) {
+            updateSession({ streaming: answer }); // Добавление стриминга в данные сессии
+        }
+        showNextQuestion();
+    }
+
+
+    async function showFinalMessage() {
+        let messageText = '';
+        let textLink = '';
+        let url = '';
+
+        if ((answers[1] === 'Радость' || answers[1] === 'Спокойствие') && answers[2] === 'Нет') {
+            messageText = "Видимо, у тебя все хорошо, а музыка не играет роли в твоей жизни. И потому я, Айрат Opioom, желаю тебе всего самого лучшего! Но на всякий случай, добавь к себе в библиотеку эту грустную эмоционально разносяющую песню, уверен, когда нибудь она понадобиться…";
+            textLink = "Добавить для будущего себя";
+        } else if ((answers[1] === 'Грусть' || answers[1] === 'Усталость' || answers[1] === 'Волнение') && (answers[2] === 'Да' || answers[2] === 'Иногда')) {
+            messageText = "У меня есть композиция, которая, возможно, станет твоим новым саундтреком. Она не решит всех проблем, но может сделать их чуть легче.";
+        } else if ((answers[1] === 'Радость' || answers[1] === 'Спокойствие') && (answers[2] === 'Да' || answers[2] === 'Иногда')) {
+            messageText = "У меня есть композиция, которая, возможно, не попадает в твое текущее состояние, но обязательно станет саундтреком в трудные периоды жизни. Она не решит всех проблем, но поможет сделать их чуть легче.";
+        } else if ((answers[1] === 'Грусть' || answers[1] === 'Усталость' || answers[1] === 'Волнение') && answers[2] === 'Нет') {
+            messageText = "Правильно подобранная под настроение музыка поможет тебе намного легче справиться с трудностями! И у меня как раз есть для тебя одна такая песня.";
+        } else {
+            messageText = "Музыка всегда помогает легче пережить любые трудности. Если ты в печали, то эта песня отлично тебе подойдет, а если нет, то сохрани для будущего себя - потом скажешь себе спасибо!";
+        }
+
+        const selectedService = answers[4];
+        if (selectedService === 'Яндекс' || selectedService === 'ВК' || selectedService === 'Spotify' || selectedService === 'Apple' || selectedService === 'YouTube') {
+            url = links[selectedService].url;
+            if (textLink === "") { // Только если текст ссылки не был изменен ранее
+                textLink = links[selectedService].text;
+            }
+        } else {
+            url = links['default'].url;
+            textLink = links['default'].text;
+        }
+
+        await updateSession({ reachedFinal: true });
+
+        const finalMessage = `<p>${messageText}</p><a href="${url}" target="_blank" onclick="trackLinkClick()" class="final-button">${textLink}</a>`;
+        document.getElementById('quiz-container').innerHTML = finalMessage;
+    }
+
+    async function trackLinkClick() {
+        await updateSession({ linkClicked: true });
+        console.log("Сессия завершена. Данные записаны в stats.csv");
+    }
+
+    function showNextQuestion() {
+        const questionContainer = document.getElementById('quiz-container');
+
+        questionContainer.classList.add('fade-out');
+
+        setTimeout(() => {
+            currentQuestionIndex++;
+            questionContainer.classList.remove('fade-out');
+
+            if (currentQuestionIndex < questions.length) {
+                showQuestion(currentQuestionIndex);
+            } else {
+                showFinalMessage();
+            }
+        }, 500);
+    }
+
+    function showQuestion(index) {
+        const questionData = questions[index];
+        document.getElementById('question').innerText = questionData.question.replace('<session_user_name>', session_user_name);
+        const input = document.getElementById('answer-input');
+        const choiceContainer = document.getElementById('choice-container');
+        const nextButton = document.getElementById('next-button');
+
+        if (questionData.type === 'text') {
+            input.style.display = 'block';
+            choiceContainer.style.display = 'none';
+            nextButton.style.display = 'block';
+            input.value = '';
+            input.onkeydown = function(event) {
+                if (event.key === "Enter" && questionData.validate(input.value.trim())) {
+                    session_user_name = input.value.trim();
+                    answers.push(session_user_name);
+                    updateSession({ name: session_user_name });
+                    showNextQuestion();
+                }
+            };
+        } else if (questionData.type === 'choice') {
+            input.style.display = 'none';
+            nextButton.style.display = 'none';
+            choiceContainer.style.display = 'block';
+            choiceContainer.innerHTML = questionData.choices.map(choice => `<button class="choice-button">${choice}</button>`).join('');
+            const buttons = choiceContainer.getElementsByClassName('choice-button');
+            for (let button of buttons) {
+                button.onclick = function () {
+                    handleAnswerSelection(button.textContent);
+                };
+            }
+        }
+    }
+
+    loadConfig();
+    showQuestion(currentQuestionIndex);
+</script>
+</body>
+</html>
