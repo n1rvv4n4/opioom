@@ -1,0 +1,2 @@
+sudo systemctl status python_http.service
+sudo systemctl status node_app.service

@@ -1,0 +1,42 @@
+# Редирект с HTTP на HTTPS
+server {
+    listen 80;
+    server_name opioom.ru www.opioom.ru;
+
+    return 301 https://$host$request_uri;
+}
+
+# Основной сервер HTTPS
+server {
+    listen 443 ssl;
+    server_name opioom.ru www.opioom.ru;
+
+    ssl_certificate /etc/letsencrypt/live/opioom.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/opioom.ru/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+#    root /var/www/propala_rep/GitHub/opioom/;
+#    index mainpage.html;
+
+    # Проксирование статических файлов на Python сервер (порт 8000)
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Проксирование API запросов на Node.js сервер (порт 8001)
+    location /api/ {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
